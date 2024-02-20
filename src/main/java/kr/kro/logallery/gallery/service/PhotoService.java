@@ -15,6 +15,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -43,12 +45,15 @@ public class PhotoService {
                 metadata.setContentType(photo.getContentType());
                 byte[] bytes = IOUtils.toByteArray(photo.getInputStream());
                 InputStream inputStream = new ByteArrayInputStream(bytes);
+                BufferedImage bufferedImage = ImageIO.read(inputStream);
                 amazonS3.putObject(new PutObjectRequest(bucketName, fileName, inputStream, metadata));
 
                 // Photo 엔티티 생성 및 저장
                 String url = amazonS3.getUrl(bucketName, fileName).toString();
                 Photo newPhoto = new Photo();
                 newPhoto.setUrl(url);
+                newPhoto.setWidth(bufferedImage.getWidth());
+                newPhoto.setHeight(bufferedImage.getHeight());
                 photoRepository.save(newPhoto);
 
             } catch (IOException e) {

@@ -14,6 +14,12 @@ public class Photo {
     Long id;
 
     @Column(nullable = false)
+    private int width;
+
+    @Column(nullable = false)
+    private int height;
+
+    @Column(nullable = false)
     private String url;
 
     @Column(nullable = true)
