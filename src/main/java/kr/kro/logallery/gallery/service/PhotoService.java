@@ -36,30 +36,49 @@ public class PhotoService {
     private String bucketName;
 
     public void save(List<MultipartFile> photos) {
-        for (MultipartFile photo : photos) {
+        photos.stream().map((photo) -> {
+            ObjectMetadata objectMetadata = new ObjectMetadata();
+            objectMetadata.setContentType(photo.getContentType());
+            objectMetadata.setContentLength(photo.getSize());
+
+            InputStream photoInputStream = null;
             try {
-                String fileName = photo.getOriginalFilename();
-
-                // S3에 업로드
-                ObjectMetadata metadata = new ObjectMetadata();
-                metadata.setContentType(photo.getContentType());
-                byte[] bytes = IOUtils.toByteArray(photo.getInputStream());
-                InputStream inputStream = new ByteArrayInputStream(bytes);
-                BufferedImage bufferedImage = ImageIO.read(inputStream);
-                amazonS3.putObject(new PutObjectRequest(bucketName, fileName, inputStream, metadata));
-
-                // Photo 엔티티 생성 및 저장
-                String url = amazonS3.getUrl(bucketName, fileName).toString();
-                Photo newPhoto = new Photo();
-                newPhoto.setUrl(url);
-                newPhoto.setWidth(bufferedImage.getWidth());
-                newPhoto.setHeight(bufferedImage.getHeight());
-                photoRepository.save(newPhoto);
-
+                photoInputStream = photo.getInputStream();
             } catch (IOException e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
             }
-        }
+
+            PutObjectRequest putObjectRequest  = new PutObjectRequest(
+                    bucketName,
+                    photo.getOriginalFilename(),
+                    photoInputStream,
+                    objectMetadata
+            );
+
+            // Photo 엔티티 생성 및 저장
+            byte[] bytes = new byte[0];
+            try {
+                bytes = IOUtils.toByteArray(photoInputStream);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            InputStream inputStream = new ByteArrayInputStream(bytes);
+            BufferedImage bufferedImage = null;
+            try {
+                bufferedImage = ImageIO.read(inputStream);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            String url = amazonS3.getUrl(bucketName, photo.getOriginalFilename()).toString();
+            Photo newPhoto = new Photo();
+            newPhoto.setUrl(url);
+            newPhoto.setWidth(bufferedImage.getWidth());
+            newPhoto.setHeight(bufferedImage.getHeight());
+            photoRepository.save(newPhoto);
+
+            return amazonS3.putObject(putObjectRequest);
+        });
     }
 
     public Page<Photo> findPhotos(int page, int size) {
