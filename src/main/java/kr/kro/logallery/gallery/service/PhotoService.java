@@ -1,6 +1,7 @@
 package kr.kro.logallery.gallery.service;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.util.IOUtils;
@@ -17,10 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,49 +34,40 @@ public class PhotoService {
     private String bucketName;
 
     public void save(List<MultipartFile> photos) {
-        photos.stream().map((photo) -> {
-            ObjectMetadata objectMetadata = new ObjectMetadata();
-            objectMetadata.setContentType(photo.getContentType());
-            objectMetadata.setContentLength(photo.getSize());
-
-            InputStream photoInputStream = null;
+        for (MultipartFile photo : photos) {
             try {
-                photoInputStream = photo.getInputStream();
+                String fileName = photo.getOriginalFilename();
+
+                // S3에 업로드
+                ObjectMetadata metadata = new ObjectMetadata();
+                metadata.setContentType(photo.getContentType());
+                byte[] bytes = IOUtils.toByteArray(photo.getInputStream());
+
+                // BufferedImage로 이미지 읽기
+                ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
+                BufferedImage bufferedImage = ImageIO.read(inputStream);
+
+                // 이미지의 너비와 높이 얻기
+                int width = bufferedImage.getWidth();
+                int height = bufferedImage.getHeight();
+
+                // Amazon S3에 이미지 업로드
+                ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
+                amazonS3.putObject(new PutObjectRequest(bucketName, fileName, byteArrayInputStream, metadata).withCannedAcl(CannedAccessControlList.PublicRead));
+                byteArrayInputStream.close();
+
+                // Photo 엔티티 생성 및 저장
+                String url = amazonS3.getUrl(bucketName, fileName).toString();
+                Photo newPhoto = new Photo();
+                newPhoto.setUrl(url);
+                newPhoto.setWidth(width);
+                newPhoto.setHeight(height);
+                photoRepository.save(newPhoto);
+
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                e.printStackTrace();
             }
-
-            PutObjectRequest putObjectRequest  = new PutObjectRequest(
-                    bucketName,
-                    photo.getOriginalFilename(),
-                    photoInputStream,
-                    objectMetadata
-            );
-
-            // Photo 엔티티 생성 및 저장
-            byte[] bytes = new byte[0];
-            try {
-                bytes = IOUtils.toByteArray(photoInputStream);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            InputStream inputStream = new ByteArrayInputStream(bytes);
-            BufferedImage bufferedImage = null;
-            try {
-                bufferedImage = ImageIO.read(inputStream);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-
-            String url = amazonS3.getUrl(bucketName, photo.getOriginalFilename()).toString();
-            Photo newPhoto = new Photo();
-            newPhoto.setUrl(url);
-            newPhoto.setWidth(bufferedImage.getWidth());
-            newPhoto.setHeight(bufferedImage.getHeight());
-            photoRepository.save(newPhoto);
-
-            return amazonS3.putObject(putObjectRequest);
-        });
+        }
     }
 
     public Page<Photo> findPhotos(int page, int size) {
