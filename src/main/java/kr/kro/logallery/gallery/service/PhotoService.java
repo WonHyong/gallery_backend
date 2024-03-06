@@ -9,7 +9,6 @@ import jakarta.transaction.Transactional;
 import kr.kro.logallery.gallery.entity.Photo;
 import kr.kro.logallery.gallery.respository.PhotoRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,7 +19,6 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Transactional
@@ -62,6 +60,7 @@ public class PhotoService {
                 newPhoto.setUrl(url);
                 newPhoto.setWidth(width);
                 newPhoto.setHeight(height);
+                newPhoto.setLikes(0);
                 photoRepository.save(newPhoto);
 
             } catch (IOException e) {
@@ -77,5 +76,13 @@ public class PhotoService {
 
     public void delete(Long id) {
         photoRepository.deleteById(id);
+    }
+
+    public void increaseLikes(Long id) {
+        Photo likePhoto = photoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Invalid photo Id: " + id));
+
+        likePhoto.setLikes(likePhoto.getLikes() + 1);
+        photoRepository.save(likePhoto);
     }
 }

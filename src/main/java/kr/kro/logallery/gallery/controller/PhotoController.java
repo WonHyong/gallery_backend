@@ -50,4 +50,12 @@ public class PhotoController {
         return ResponseEntity.ok("삭제 성공");
     }
 
+    @Operation(summary = "increase likes")
+    @PutMapping("/{photoId}/likes")
+    public ResponseEntity increaseLike(@PathVariable Long photoId){
+        photoService.increaseLikes(photoId);
+
+        return ResponseEntity.ok("좋아요 +1");
+    }
+
 }
