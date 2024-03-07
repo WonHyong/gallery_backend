@@ -15,4 +15,7 @@ public interface PhotoRepository extends JpaRepository<Photo, Long> {
     @Modifying
     @Query("update Photo p set p.likes = p.likes+1 where p.id = :id")
     void increaseLike(@Param("id")Long id);
+
+    @Query("select p.likes from Photo p where p.id = :id")
+    int findLikeById(@Param("id") Long id);
 }

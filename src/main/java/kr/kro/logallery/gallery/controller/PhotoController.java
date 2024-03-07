@@ -53,9 +53,10 @@ public class PhotoController {
     @Operation(summary = "increase likes")
     @PutMapping("/{photoId}/likes")
     public ResponseEntity increaseLike(@PathVariable Long photoId){
-        photoService.increaseLikes(photoId);
 
-        return ResponseEntity.ok("좋아요 +1");
+        int updatedLike = photoService.increaseLikes(photoId);
+
+        return new ResponseEntity<>(updatedLike, HttpStatus.OK);
     }
 
 }

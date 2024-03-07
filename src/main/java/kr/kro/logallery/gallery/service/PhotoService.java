@@ -78,7 +78,8 @@ public class PhotoService {
         photoRepository.deleteById(id);
     }
 
-    public void increaseLikes(Long id) {
+    public int increaseLikes(Long id) {
         photoRepository.increaseLike(id);
+        return photoRepository.findLikeById(id);
     }
 }
