@@ -10,18 +10,21 @@ import lombok.*;
 public class Photo {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     Long id;
 
-    @Column(nullable = false)
+    @Column
     private int width;
 
-    @Column(nullable = false)
+    @Column
     private int height;
 
-    @Column(nullable = false)
+    @Column
     private String url;
 
-    @Column(nullable = true)
+    @Column
     private String thbUrl;
+
+    @Column
+    private int likes;
 }
