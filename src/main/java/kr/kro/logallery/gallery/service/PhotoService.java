@@ -79,10 +79,6 @@ public class PhotoService {
     }
 
     public void increaseLikes(Long id) {
-        Photo likePhoto = photoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Invalid photo Id: " + id));
-
-        likePhoto.setLikes(likePhoto.getLikes() + 1);
-        photoRepository.save(likePhoto);
+        photoRepository.increaseLike(id);
     }
 }
