@@ -3,6 +3,8 @@ package kr.kro.logallery.gallery.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.Date;
+
 @Entity
 @Data
 @AllArgsConstructor
@@ -27,4 +29,15 @@ public class Photo {
 
     @Column
     private int likes;
+
+    @Column
+    private double gpsLatitude;
+
+    @Column
+    private double gpsLongitude;
+
+    @Column
+    private Date uploadDate;
+
+
 }
