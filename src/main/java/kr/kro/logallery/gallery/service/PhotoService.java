@@ -9,6 +9,7 @@ import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
+import com.drew.metadata.exif.ExifIFD0Directory;
 import com.drew.metadata.exif.GpsDirectory;
 import jakarta.transaction.Transactional;
 import kr.kro.logallery.gallery.entity.Photo;
@@ -49,11 +50,19 @@ public class PhotoService {
                 try{
                     ByteArrayInputStream inputStream = new ByteArrayInputStream(photo.getBytes());
                     Metadata metadata = ImageMetadataReader.readMetadata(inputStream);
+                    System.out.println(metadata.getDirectories());
 
                     // ExifSubIFDDirectory에서 생성 날짜 정보 추출
-                    ExifSubIFDDirectory directory = metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class);
-                    Date creationDate = directory.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
-                    newPhoto.setUploadDate(creationDate);
+                    ExifIFD0Directory directory = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
+
+                    if(directory != null){
+                        System.out.println(directory.getTags());
+                        Date creationDate = directory.getDate(ExifIFD0Directory.TAG_DATETIME);
+                        newPhoto.setUploadDate(creationDate);
+                        System.out.println(creationDate);
+                    }else{
+                        System.out.println("Creation date not found");
+                    }
 
                     // GpsDirectory에서 GPS 정보 추출
                     GpsDirectory gpsDirectory = metadata.getFirstDirectoryOfType(GpsDirectory.class);
@@ -63,6 +72,7 @@ public class PhotoService {
 
                         newPhoto.setGpsLatitude(latitude);
                         newPhoto.setGpsLongitude(longitude);
+                        System.out.println("Latitude: " + latitude + ", Longtitude: " + longitude);
                     }else{
                         System.out.println("GPS not found");
                     }
@@ -97,6 +107,7 @@ public class PhotoService {
                 newPhoto.setWidth(width);
                 newPhoto.setHeight(height);
                 newPhoto.setLikes(0);
+                System.out.println("width: " + width + ", height: " + height);
                 photoRepository.save(newPhoto);
 
             } catch (IOException e) {
