@@ -5,6 +5,11 @@ import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.util.IOUtils;
+import com.drew.imaging.ImageMetadataReader;
+import com.drew.imaging.ImageProcessingException;
+import com.drew.metadata.Directory;
+import com.drew.metadata.Metadata;
+import com.drew.metadata.exif.GpsDirectory;
 import jakarta.transaction.Transactional;
 import kr.kro.logallery.gallery.entity.Photo;
 import kr.kro.logallery.gallery.respository.PhotoRepository;
@@ -14,10 +19,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import com.drew.metadata.exif.ExifSubIFDDirectory;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -35,6 +42,36 @@ public class PhotoService {
         for (MultipartFile photo : photos) {
             try {
                 String fileName = photo.getOriginalFilename();
+
+                Photo newPhoto = new Photo();
+
+                // 메타데이터 읽기
+                try{
+                    ByteArrayInputStream inputStream = new ByteArrayInputStream(photo.getBytes());
+                    Metadata metadata = ImageMetadataReader.readMetadata(inputStream);
+
+                    // ExifSubIFDDirectory에서 생성 날짜 정보 추출
+                    ExifSubIFDDirectory directory = metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class);
+                    Date creationDate = directory.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
+                    newPhoto.setUploadDate(creationDate);
+
+                    // GpsDirectory에서 GPS 정보 추출
+                    GpsDirectory gpsDirectory = metadata.getFirstDirectoryOfType(GpsDirectory.class);
+                    if(gpsDirectory != null){
+                        double latitude = gpsDirectory.getGeoLocation().getLatitude();
+                        double longitude = gpsDirectory.getGeoLocation().getLongitude();
+
+                        newPhoto.setGpsLatitude(latitude);
+                        newPhoto.setGpsLongitude(longitude);
+                    }else{
+                        System.out.println("GPS not found");
+                    }
+
+                }catch (IOException e){
+                    e.printStackTrace();
+                } catch (ImageProcessingException e) {
+                    throw new RuntimeException(e);
+                }
 
                 // S3에 업로드
                 ObjectMetadata metadata = new ObjectMetadata();
@@ -56,7 +93,6 @@ public class PhotoService {
 
                 // Photo 엔티티 생성 및 저장
                 String url = amazonS3.getUrl(bucketName, fileName).toString();
-                Photo newPhoto = new Photo();
                 newPhoto.setUrl(url);
                 newPhoto.setWidth(width);
                 newPhoto.setHeight(height);
