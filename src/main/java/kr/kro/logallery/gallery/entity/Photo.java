@@ -30,13 +30,13 @@ public class Photo {
     @Column
     private int likes;
 
-    @Column
+    @Column(nullable = true)
     private double gpsLatitude;
 
-    @Column
+    @Column(nullable = true)
     private double gpsLongitude;
 
-    @Column
+    @Column(nullable = true)
     private Date uploadDate;
 
 
