@@ -12,7 +12,6 @@ import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifIFD0Directory;
 import com.drew.metadata.exif.GpsDirectory;
-import jakarta.transaction.Transactional;
 import kr.kro.logallery.gallery.entity.Photo;
 import kr.kro.logallery.gallery.respository.HashTagRepository;
 import kr.kro.logallery.gallery.respository.PhotoRepository;
