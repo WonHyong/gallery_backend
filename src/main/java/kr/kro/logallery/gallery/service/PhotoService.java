@@ -48,6 +48,33 @@ public class PhotoService {
     public void save(MultipartFile photo) {
         try {
             String fileName = photo.getOriginalFilename();
+
+            
+            // S3에 업로드
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentType(photo.getContentType());
+            byte[] bytes = IOUtils.toByteArray(photo.getInputStream());
+
+            // BufferedImage로 이미지 읽기
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
+            BufferedImage bufferedImage = ImageIO.read(inputStream);
+
+            // 이미지의 너비와 높이 얻기
+            int width = bufferedImage.getWidth();
+            int height = bufferedImage.getHeight();
+
+            // Amazon S3에 이미지 업로드
+            ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
+            amazonS3.putObject(new PutObjectRequest(bucketName, fileName, byteArrayInputStream, metadata).withCannedAcl(CannedAccessControlList.PublicRead));
+            byteArrayInputStream.close();
+
+            // Photo 엔티티 생성 및 저장
+            String url = amazonS3.getUrl(bucketName, fileName).toString();
+            Photo newPhoto = new Photo();
+            newPhoto.setUrl(url);
+            newPhoto.setWidth(width);
+            newPhoto.setHeight(height);
+            
             try{
                     ByteArrayInputStream inputStream = new ByteArrayInputStream(photo.getBytes());
                     Metadata metadata = ImageMetadataReader.readMetadata(inputStream);
@@ -84,30 +111,6 @@ public class PhotoService {
                     throw new RuntimeException(e);
                 }
 
-            // S3에 업로드
-            ObjectMetadata metadata = new ObjectMetadata();
-            metadata.setContentType(photo.getContentType());
-            byte[] bytes = IOUtils.toByteArray(photo.getInputStream());
-
-            // BufferedImage로 이미지 읽기
-            ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
-            BufferedImage bufferedImage = ImageIO.read(inputStream);
-
-            // 이미지의 너비와 높이 얻기
-            int width = bufferedImage.getWidth();
-            int height = bufferedImage.getHeight();
-
-            // Amazon S3에 이미지 업로드
-            ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
-            amazonS3.putObject(new PutObjectRequest(bucketName, fileName, byteArrayInputStream, metadata).withCannedAcl(CannedAccessControlList.PublicRead));
-            byteArrayInputStream.close();
-
-            // Photo 엔티티 생성 및 저장
-            String url = amazonS3.getUrl(bucketName, fileName).toString();
-            Photo newPhoto = new Photo();
-            newPhoto.setUrl(url);
-            newPhoto.setWidth(width);
-            newPhoto.setHeight(height);
 
             List<String> tags = GenerateRandomTag();
             for (String tag:tags){
