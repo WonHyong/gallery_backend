@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Date;
 
 @Entity
 @Getter @Setter
@@ -16,18 +17,31 @@ public class Photo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column
     private int width;
 
-    @Column(nullable = false)
+    @Column
     private int height;
 
-    @Column(nullable = false)
+    @Column
     private String url;
 
-    @Column(nullable = true)
+    @Column
     private String thbUrl;
 
     @ManyToMany(mappedBy = "photos", fetch = FetchType.LAZY)
     private List<HashTag> hashTags = new ArrayList<>();
+  
+    @Column
+    private int likes;
+
+    @Column(nullable = true)
+    private double gpsLatitude;
+
+    @Column(nullable = true)
+    private double gpsLongitude;
+
+    @Column(nullable = true)
+    private Date uploadDate;
+
 }

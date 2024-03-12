@@ -52,4 +52,13 @@ public class PhotoController {
         return ResponseEntity.ok("삭제 성공");
     }
 
+    @Operation(summary = "increase likes")
+    @PutMapping("/{photoId}/likes")
+    public ResponseEntity increaseLike(@PathVariable Long photoId){
+
+        int updatedLike = photoService.increaseLikes(photoId);
+
+        return new ResponseEntity<>(updatedLike, HttpStatus.OK);
+    }
+
 }
