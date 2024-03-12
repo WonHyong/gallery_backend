@@ -76,12 +76,12 @@ public class PhotoService {
             newPhoto.setHeight(height);
             
             try{
-                    ByteArrayInputStream inputStream = new ByteArrayInputStream(photo.getBytes());
-                    Metadata metadata = ImageMetadataReader.readMetadata(inputStream);
-                    System.out.println(metadata.getDirectories());
+                    ByteArrayInputStream inputStream2 = new ByteArrayInputStream(photo.getBytes());
+                    Metadata metadata2 = ImageMetadataReader.readMetadata(inputStream2);
+                    System.out.println(metadata2.getDirectories());
 
                     // ExifSubIFDDirectory에서 생성 날짜 정보 추출
-                    ExifIFD0Directory directory = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
+                    ExifIFD0Directory directory = metadata2.getFirstDirectoryOfType(ExifIFD0Directory.class);
 
                     if(directory != null){
                         System.out.println(directory.getTags());
@@ -93,7 +93,7 @@ public class PhotoService {
                     }
 
                     // GpsDirectory에서 GPS 정보 추출
-                    GpsDirectory gpsDirectory = metadata.getFirstDirectoryOfType(GpsDirectory.class);
+                    GpsDirectory gpsDirectory = metadata2.getFirstDirectoryOfType(GpsDirectory.class);
                     if(gpsDirectory != null){
                         double latitude = gpsDirectory.getGeoLocation().getLatitude();
                         double longitude = gpsDirectory.getGeoLocation().getLongitude();
