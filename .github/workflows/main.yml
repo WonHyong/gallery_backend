@@ -9,15 +9,32 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+    name: Deploy
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
-
-    - name: Git Pull on Deployment Server
-      run: |
-        ssh ubuntu@13.236.242.211 'cd gallery_backend && git pull'
-
-    - name: Docker Compose Up
-      run: |
-        ssh ubuntu@13.236.242.211 'cd gallery_backend && docker-compose up -d'
+      # Deploy
+      - name: Deploy to ec2
+        if: github.event_name == 'push'
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          port: 22
+          key: ${{ secrets.PRIVATE_KEY }}
+          script: |
+            sudo docker container prune -f
+            cd gallery_backend
+            sudo git pull 
+            
+            # Environment variables
+            echo "${{ secrets.ENVIRONMENT_VARS }}" >| .env
+            export $(grep -v '^#' .env | xargs -d '\n')
+            
+            docker-compose up -d --build
+            docker image prune -f
+            
+            ERROR_COUNT=$(docker-compose logs | grep -c ERROR)
+            
+            if [ $ERROR_COUNT -gt 0 ]; then
+              echo "Found $ERROR_COUNT error(s) in container logs."
+              exit 1
+            fi
