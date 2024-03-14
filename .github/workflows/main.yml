@@ -32,7 +32,7 @@ jobs:
             sudo docker compose up -d --build
             sudo docker image prune -f
             
-            ERROR_COUNT=$(docker-compose logs | grep -c ERROR)
+            ERROR_COUNT=$(sudo docker compose logs | grep -c ERROR)
             
             if [ $ERROR_COUNT -gt 0 ]; then
               echo "Found $ERROR_COUNT error(s) in container logs."
