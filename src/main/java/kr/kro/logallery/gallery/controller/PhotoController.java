@@ -61,4 +61,13 @@ public class PhotoController {
         return new ResponseEntity<>(updatedLike, HttpStatus.OK);
     }
 
+    @Operation(summary = "search by tag")
+    @GetMapping("/search/{tags}")
+    public ResponseEntity increaseLike(Pageable pageable, @PathVariable String tags){
+        String[] tagList = tags.split("&");
+
+        Slice<Photo> result = photoService.searchPhotos(pageable, tagList);
+        return ResponseEntity.ok(result);
+    }
+
 }

@@ -152,4 +152,11 @@ public class PhotoService {
         photoRepository.increaseLike(id);
         return photoRepository.findLikeById(id);
     }
+
+
+    public Slice<Photo> searchPhotos(Pageable pageable, String[] tags) {
+
+        return photoRepository.findAllByTagsContainsAll(pageable, tags);
+
+    }
 }

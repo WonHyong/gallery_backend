@@ -16,6 +16,9 @@ public interface PhotoRepository extends JpaRepository<Photo, Long> {
 
     Page<Photo> findAllByOrderByIdDesc(Pageable pageable);
 
+    @Query("SELECT p FROM Photo p JOIN p.hashTags t WHERE t.tag IN :tags GROUP BY p HAVING COUNT(DISTINCT t.tag) = :#{#tags.length}")
+    Page<Photo> findAllByTagsContainsAll(Pageable pageable, String[] tags);
+
     @Modifying
     @Query("update Photo p set p.likes = p.likes+1 where p.id = :id")
     void increaseLike(@Param("id")Long id);
